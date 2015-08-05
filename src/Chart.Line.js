@@ -53,9 +53,27 @@
 		legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<datasets.length; i++){%><li><span style=\"background-color:<%=datasets[i].strokeColor%>\"><%if(datasets[i].label){%><%=datasets[i].label%><%}%></span></li><%}%></ul>",
 
 		//Boolean - Whether to horizontally center the label and point dot inside the grid
-		offsetGridLines : false
+		offsetGridLines : false,
+
+		// Tooltips
+		customTooltips: customTooltips
 
 	};
+
+	function customTooltips() {
+		var ctx = this.chart.ctx
+		console.log(this)
+		// ctx.font = helpers.fontString(this.fontSize,this.fontStyle,this.fontFamily);
+		ctx.lineWidth = '1';
+		ctx.strokeStyle = this.lineColor;
+		ctx.beginPath();
+		ctx.moveTo(this.x, 0);
+		ctx.lineTo(this.x, ctx.canvas.height - 220);
+		ctx.stroke();
+		ctx.closePath();
+		
+		this.clickFunc(this.tips, this.num)
+	}
 
 
 	Chart.Type.extend({
@@ -80,7 +98,8 @@
 			//Set up tooltip events on the chart
 			if (this.options.showTooltips){
 				helpers.bindEvents(this, this.options.tooltipEvents, function(evt){
-					var activePoints = (evt.type !== 'mouseout') ? this.getPointsAtEvent(evt) : [];
+					// var activePoints = (evt.type !== 'mouseout') ? this.getPointsAtEvent(evt) : [];
+					var activePoints = this.getPointsAtEvent(evt);
 					this.eachPoints(function(point){
 						point.restore(['fillColor', 'strokeColor']);
 					});
@@ -99,6 +118,7 @@
 					label : dataset.label || null,
 					fillColor : dataset.fillColor,
 					strokeColor : dataset.strokeColor,
+					lineColor : dataset.lineColor,
 					pointColor : dataset.pointColor,
 					pointStrokeColor : dataset.pointStrokeColor,
 					points : []
@@ -106,22 +126,23 @@
 
 				this.datasets.push(datasetObject);
 
-
 				helpers.each(dataset.data,function(dataPoint,index){
 					//Add a new point for each piece of data, passing any required data to draw.
 					datasetObject.points.push(new this.PointClass({
 						value : dataPoint,
 						label : data.labels[index],
+						tips : data.tipsets[index],
 						datasetLabel: dataset.label,
 						strokeColor : dataset.pointStrokeColor,
 						fillColor : dataset.pointColor,
+						lineColor: dataset.lineColor,
 						highlightFill : dataset.pointHighlightFill || dataset.pointColor,
-						highlightStroke : dataset.pointHighlightStroke || dataset.pointStrokeColor
+						highlightStroke : dataset.pointHighlightStroke || dataset.pointStrokeColor,
+						clickFunc: data.clickFunc
 					}));
 				},this);
 
 				this.buildScale(data.labels);
-
 
 				this.eachPoints(function(point, index){
 					helpers.extend(point, {
@@ -130,6 +151,9 @@
 					});
 					point.save();
 				}, this);
+
+				var pointsLen = this.datasets[0]['points'].length
+				this.showTooltip(this.datasets[0]['points'].slice(pointsLen-1));
 
 			},this);
 

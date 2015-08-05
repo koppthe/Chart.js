@@ -121,7 +121,7 @@
 			customTooltips: false,
 
 			// Array - Array of string names to attach tooltip events
-			tooltipEvents: ["mousemove", "touchstart", "touchmove", "mouseout"],
+			tooltipEvents: ["mousemove", "touchstart", /*"touchmove"*/, "mouseout"],
 
 			// String - Tooltip background colour
 			tooltipFillColor: "rgba(0,0,0,0.8)",
@@ -991,8 +991,8 @@
 		},
 		showTooltip : function(ChartElements, forceRedraw){
 			// Only redraw the chart if we've actually changed what we're hovering on.
-			if (typeof this.activeElements === 'undefined') this.activeElements = [];
-
+			// if (typeof this.activeElements === 'undefined') this.activeElements = [];
+			this.activeElements = [];
 			var isChanged = (function(Elements){
 				var changed = false;
 
@@ -1016,9 +1016,9 @@
 				this.activeElements = ChartElements;
 			}
 			this.draw();
-			if(this.options.customTooltips){
-				this.options.customTooltips(false);
-			}
+			// if(this.options.customTooltips){
+			// 	this.options.customTooltips(this);
+			// }
 			if (ChartElements.length > 0){
 				// If we have multiple datasets, show a MultiTooltip for all of the data points at that index
 				if (this.datasets && this.datasets.length > 1) {
@@ -1104,14 +1104,18 @@
 					}).draw();
 
 				} else {
+					
 					each(ChartElements, function(Element) {
-						var tooltipPosition = Element.tooltipPosition();
+						// var tooltipPosition = Element.tooltipPosition();
 						new Chart.Tooltip({
-							x: Math.round(tooltipPosition.x),
-							y: Math.round(tooltipPosition.y),
+							// x: Math.round(tooltipPosition.x) | Element.x,
+							// y: Math.round(tooltipPosition.y) | Element.y,
+							x: Element.x,
+							y: Element.y,
 							xPadding: this.options.tooltipXPadding,
 							yPadding: this.options.tooltipYPadding,
 							fillColor: this.options.tooltipFillColor,
+							lineColor: this.activeElements[0]['lineColor'],
 							textColor: this.options.tooltipFontColor,
 							fontFamily: this.options.tooltipFontFamily,
 							fontStyle: this.options.tooltipFontStyle,
@@ -1119,8 +1123,11 @@
 							caretHeight: this.options.tooltipCaretSize,
 							cornerRadius: this.options.tooltipCornerRadius,
 							text: template(this.options.tooltipTemplate, Element),
+							tips: Element.tips,
+							num: Element.value,
 							chart: this.chart,
-							custom: this.options.customTooltips
+							custom: this.options.customTooltips,
+							clickFunc: Element.clickFunc
 						}).draw();
 					}, this);
 				}
@@ -1377,7 +1384,6 @@
 	
 	Chart.Tooltip = Chart.Element.extend({
 		draw : function(){
-
 			var ctx = this.chart.ctx;
 
 			ctx.font = fontString(this.fontSize,this.fontStyle,this.fontFamily);
