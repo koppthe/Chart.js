@@ -121,7 +121,7 @@
 			customTooltips: false,
 
 			// Array - Array of string names to attach tooltip events
-			tooltipEvents: ["mousemove", "touchstart", /*"touchmove"*/, "mouseout"],
+			tooltipEvents: ["mousemove", "click", /*"touchmove"*/, "mouseout"],
 
 			// String - Tooltip background colour
 			tooltipFillColor: "rgba(0,0,0,0.8)",
