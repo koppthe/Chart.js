@@ -2765,7 +2765,6 @@
 
 	function customTooltips() {
 		var ctx = this.chart.ctx
-		console.log(this)
 		// ctx.font = helpers.fontString(this.fontSize,this.fontStyle,this.fontFamily);
 		ctx.lineWidth = '1';
 		ctx.strokeStyle = this.lineColor;
@@ -2861,7 +2860,7 @@
 			},this);
 
 
-			this.render();
+			// this.render();
 		},
 		update : function(){
 			this.scale.update();
@@ -3438,22 +3437,22 @@
 
 			this.buildScale(data);
 
-			//Set up tooltip events on the chart
-			if (this.options.showTooltips){
-				helpers.bindEvents(this, this.options.tooltipEvents, function(evt){
-					var activePointsCollection = (evt.type !== 'mouseout') ? this.getPointsAtEvent(evt) : [];
+			//Set up tooltip events on the chart (close)
+			// if (this.options.showTooltips){
+			// 	helpers.bindEvents(this, this.options.tooltipEvents, function(evt){
+			// 		var activePointsCollection = (evt.type !== 'mouseout') ? this.getPointsAtEvent(evt) : [];
 
-					this.eachPoints(function(point){
-						point.restore(['fillColor', 'strokeColor']);
-					});
-					helpers.each(activePointsCollection, function(activePoint){
-						activePoint.fillColor = activePoint.highlightFill;
-						activePoint.strokeColor = activePoint.highlightStroke;
-					});
+			// 		this.eachPoints(function(point){
+			// 			point.restore(['fillColor', 'strokeColor']);
+			// 		});
+			// 		helpers.each(activePointsCollection, function(activePoint){
+			// 			activePoint.fillColor = activePoint.highlightFill;
+			// 			activePoint.strokeColor = activePoint.highlightStroke;
+			// 		});
 
-					this.showTooltip(activePointsCollection);
-				});
-			}
+			// 		this.showTooltip(activePointsCollection);
+			// 	});
+			// }
 
 			//Iterate through each of the datasets, and build this into a property of the chart
 			helpers.each(data.datasets,function(dataset){
@@ -3476,7 +3475,7 @@
 						pointPosition = this.scale.getPointPosition(index, this.scale.calculateCenterOffset(dataPoint));
 					}
 					datasetObject.points.push(new this.PointClass({
-						value : dataPoint,
+						value : dataPoint - 20,	// because calculateScaleRange() function get the max value is 80
 						label : data.labels[index],
 						datasetLabel: dataset.label,
 						x: (this.options.animation) ? this.scale.xCenter : pointPosition.x,
@@ -3689,6 +3688,12 @@
 					if (point.hasValue()){
 						point.draw();
 					}
+					// tooltipX = this.x - tooltipWidth + (this.cornerRadius + this.caretHeight);
+					ctx.font = helpers.fontString(14, "lighter", "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif");
+					ctx.fillStyle = "#333";
+					ctx.textAlign = "center";
+					ctx.textBaseline = "middle";
+					ctx.fillText(point.value + 20, point.x, point.y);
 				});
 
 			},this);

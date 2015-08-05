@@ -62,7 +62,6 @@
 
 	function customTooltips() {
 		var ctx = this.chart.ctx
-		console.log(this)
 		// ctx.font = helpers.fontString(this.fontSize,this.fontStyle,this.fontFamily);
 		ctx.lineWidth = '1';
 		ctx.strokeStyle = this.lineColor;
@@ -158,7 +157,7 @@
 			},this);
 
 
-			this.render();
+			// this.render();
 		},
 		update : function(){
 			this.scale.update();
