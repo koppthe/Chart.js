@@ -2840,7 +2840,8 @@
 						lineColor: dataset.lineColor,
 						highlightFill : dataset.pointHighlightFill || dataset.pointColor,
 						highlightStroke : dataset.pointHighlightStroke || dataset.pointStrokeColor,
-						clickFunc: data.clickFunc
+						clickFunc: data.clickFunc,
+						nowWeek: data.nowWeek
 					}));
 				},this);
 
@@ -2855,7 +2856,12 @@
 				}, this);
 
 				var pointsLen = this.datasets[0]['points'].length
-				this.showTooltip(this.datasets[0]['points'].slice(pointsLen-1));
+				// console.log(this.datasets[0])
+				helpers.each(this.datasets[0]['points'], function(data, index){
+					if (data.nowWeek + '周' == data.label) {
+						this.showTooltip([data])
+					}
+				}.bind(this))
 
 			},this);
 
