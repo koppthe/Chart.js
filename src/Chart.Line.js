@@ -62,12 +62,12 @@
 
 	function customTooltips() {
 		var ctx = this.chart.ctx
-		// ctx.font = helpers.fontString(this.fontSize,this.fontStyle,this.fontFamily);
+
 		ctx.lineWidth = '1';
 		ctx.strokeStyle = this.lineColor;
 		ctx.beginPath();
 		ctx.moveTo(this.x, 0);
-		ctx.lineTo(this.x, ctx.canvas.height - 220);
+		ctx.lineTo(this.x, this.lineEndPoint);
 		ctx.stroke();
 		ctx.closePath();
 		
@@ -93,12 +93,13 @@
 			});
 
 			this.datasets = [];
+			var _this = this;
 
 			//Set up tooltip events on the chart
 			if (this.options.showTooltips){
 				helpers.bindEvents(this, this.options.tooltipEvents, function(evt){
-					// var activePoints = (evt.type !== 'mouseout') ? this.getPointsAtEvent(evt) : [];
-					var activePoints = this.getPointsAtEvent(evt);
+					var activePoints = (evt.type !== 'mouseout') ? this.getPointsAtEvent(evt) : [];
+					// var activePoints = this.getPointsAtEvent(evt);
 					this.eachPoints(function(point){
 						point.restore(['fillColor', 'strokeColor']);
 					});
@@ -106,6 +107,7 @@
 						activePoint.fillColor = activePoint.highlightFill;
 						activePoint.strokeColor = activePoint.highlightStroke;
 					});
+					_this.clickValue = activePoints[0].label
 					this.showTooltip(activePoints);
 				});
 			}
@@ -125,6 +127,7 @@
 
 				this.datasets.push(datasetObject);
 
+
 				helpers.each(dataset.data,function(dataPoint,index){
 					//Add a new point for each piece of data, passing any required data to draw.
 					datasetObject.points.push(new this.PointClass({
@@ -138,11 +141,12 @@
 						highlightFill : dataset.pointHighlightFill || dataset.pointColor,
 						highlightStroke : dataset.pointHighlightStroke || dataset.pointStrokeColor,
 						clickFunc: data.clickFunc,
-						nowWeek: data.nowWeek
+						currentValue: data.currentValue
 					}));
 				},this);
 
 				this.buildScale(data.labels);
+
 
 				this.eachPoints(function(point, index){
 					helpers.extend(point, {
@@ -152,18 +156,10 @@
 					point.save();
 				}, this);
 
-				var pointsLen = this.datasets[0]['points'].length
-				// console.log(this.datasets[0])
-				helpers.each(this.datasets[0]['points'], function(data, index){
-					if (data.nowWeek + '周' == data.label) {
-						this.showTooltip([data])
-					}
-				}.bind(this))
-
 			},this);
 
 
-			// this.render();
+			this.render();
 		},
 		update : function(){
 			this.scale.update();
@@ -304,8 +300,8 @@
 				return helpers.findPreviousWhere(collection, hasValue, index) || point;
 			};
 
+			if (!this.scale) return;
 			this.scale.draw(easingDecimal);
-
 
 			helpers.each(this.datasets,function(dataset){
 				var pointsWithValues = helpers.where(dataset.points, hasValue);
@@ -384,7 +380,9 @@
 					}
 				}, this);
 
-				ctx.stroke();
+				if (this.options.datasetStroke) {
+					ctx.stroke();
+				}
 
 				if (this.options.datasetFill && pointsWithValues.length > 0){
 					//Round off the line by going to the base of the chart, back to the start, then fill.
@@ -401,6 +399,16 @@
 				helpers.each(pointsWithValues,function(point){
 					point.draw();
 				});
+
+				// Draw the line Tooltips
+				if (this.options.showTooltips) {
+					var pointsLen = pointsWithValues.length
+					helpers.each(pointsWithValues, function(data, index){
+						if (!this.clickValue && data.currentValue == data.label) {
+							this.showTooltip([data])
+						}
+					}.bind(this))
+				}
 			},this);
 		}
 	});

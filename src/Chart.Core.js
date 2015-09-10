@@ -150,6 +150,9 @@
 			// String - Tooltip title font colour
 			tooltipTitleFontColor: "#fff",
 
+			// String - Tooltip title template
+			tooltipTitleTemplate: "<%= label%>",
+
 			// Number - pixel width of padding around tooltip text
 			tooltipYPadding: 6,
 
@@ -991,8 +994,8 @@
 		},
 		showTooltip : function(ChartElements, forceRedraw){
 			// Only redraw the chart if we've actually changed what we're hovering on.
-			// if (typeof this.activeElements === 'undefined') this.activeElements = [];
-			this.activeElements = [];
+			if (typeof this.activeElements === 'undefined') this.activeElements = [];
+			// this.activeElements = [];
 			var isChanged = (function(Elements){
 				var changed = false;
 
@@ -1017,7 +1020,7 @@
 			}
 			this.draw();
 			// if(this.options.customTooltips){
-			// 	this.options.customTooltips(this);
+			// 	this.options.customTooltips(false);
 			// }
 			if (ChartElements.length > 0){
 				// If we have multiple datasets, show a MultiTooltip for all of the data points at that index
@@ -1097,21 +1100,21 @@
 						labels: tooltipLabels,
 						legendColors: tooltipColors,
 						legendColorBackground : this.options.multiTooltipKeyBackground,
-						title: ChartElements[0].label,
+						// title: ChartElements[0].label,
+						title: template(this.options.tooltipTitleTemplate,ChartElements[0]),
 						chart: this.chart,
 						ctx: this.chart.ctx,
 						custom: this.options.customTooltips
 					}).draw();
 
 				} else {
-					
+					// show only one Tooltip
+					ChartElements = ChartElements.slice(0, 1);
 					each(ChartElements, function(Element) {
-						// var tooltipPosition = Element.tooltipPosition();
+						var tooltipPosition = Element.tooltipPosition();
 						new Chart.Tooltip({
-							// x: Math.round(tooltipPosition.x) | Element.x,
-							// y: Math.round(tooltipPosition.y) | Element.y,
-							x: Element.x,
-							y: Element.y,
+							x: Math.round(tooltipPosition.x) | Element.x,
+							y: Math.round(tooltipPosition.y) | Element.y,
 							xPadding: this.options.tooltipXPadding,
 							yPadding: this.options.tooltipYPadding,
 							fillColor: this.options.tooltipFillColor,
@@ -1127,7 +1130,8 @@
 							num: Element.value,
 							chart: this.chart,
 							custom: this.options.customTooltips,
-							clickFunc: Element.clickFunc
+							clickFunc: Element.clickFunc,
+							lineEndPoint: this.scale.endPoint
 						}).draw();
 					}, this);
 				}
@@ -1327,6 +1331,16 @@
 			if (this.showStroke){
 				ctx.stroke();
 			}
+
+			// draw the text
+			if (this.showText && this.percentValue) {
+				var textPosition = this.tooltipPosition();
+				ctx.font = helpers.fontString(14, "lighter", "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif");
+				ctx.fillStyle = "#333";
+				ctx.textAlign = "center";
+				ctx.textBaseline = "middle";
+				ctx.fillText(this.percentValue + '%', textPosition.x, textPosition.y);
+			}
 		}
 	});
 
@@ -1384,6 +1398,7 @@
 	
 	Chart.Tooltip = Chart.Element.extend({
 		draw : function(){
+
 			var ctx = this.chart.ctx;
 
 			ctx.font = fontString(this.fontSize,this.fontStyle,this.fontFamily);

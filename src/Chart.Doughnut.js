@@ -10,6 +10,9 @@
 		//Boolean - Whether we should show a stroke on each segment
 		segmentShowStroke : true,
 
+		//Boolean - Whether we should show the text on each segment
+		segmentShowText : true,
+
 		//String - The colour of each segment stroke
 		segmentStrokeColor : "#fff",
 
@@ -91,7 +94,7 @@
 			return segmentsArray;
 		},
 		addData : function(segment, atIndex, silent){
-			var index = atIndex || this.segments.length;
+			var index = atIndex !== undefined ? atIndex : this.segments.length;
 			this.segments.splice(index, 0, new this.SegmentArc({
 				value : segment.value,
 				outerRadius : (this.options.animateScale) ? 0 : this.outerRadius,
@@ -99,10 +102,12 @@
 				fillColor : segment.color,
 				highlightColor : segment.highlight || segment.color,
 				showStroke : this.options.segmentShowStroke,
+				showText : this.options.segmentShowText,
 				strokeWidth : this.options.segmentStrokeWidth,
 				strokeColor : this.options.segmentStrokeColor,
 				startAngle : Math.PI * 1.5,
 				circumference : (this.options.animateRotate) ? 0 : this.calculateCircumference(segment.value),
+				percentValue : (segment.value / this.total * 100).toFixed(1) * 1,
 				label : segment.label
 			}));
 			if (!silent){
