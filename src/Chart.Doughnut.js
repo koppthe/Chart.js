@@ -34,6 +34,9 @@
 		//Boolean - Whether we animate scaling the Doughnut from the centre
 		animateScale : false,
 
+		//Number - The font size of Label
+		LabelfontSize: 14,
+
 		//String - A legend template
 		legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<segments.length; i++){%><li><span style=\"background-color:<%=segments[i].fillColor%>\"><%if(segments[i].label){%><%=segments[i].label%><%}%></span></li><%}%></ul>"
 
@@ -108,7 +111,8 @@
 				startAngle : Math.PI * 1.5,
 				circumference : (this.options.animateRotate) ? 0 : this.calculateCircumference(segment.value),
 				percentValue : (segment.value / this.total * 100).toFixed(1) * 1,
-				label : segment.label
+				label : segment.label,
+				fontSize : this.options.fontSize
 			}));
 			if (!silent){
 				this.reflow();

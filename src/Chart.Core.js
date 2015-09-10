@@ -1300,8 +1300,14 @@
 			//Ensure within the outside of the arc centre, but inside arc outer
 		},
 		tooltipPosition : function(){
+			console.log(this)
 			var centreAngle = this.startAngle + ((this.endAngle - this.startAngle) / 2),
 				rangeFromCentre = (this.outerRadius - this.innerRadius) / 2 + this.innerRadius;
+
+			if (this.percentValue < 10) {
+				centreAngle = this.startAngle
+				rangeFromCentre = this.outerRadius
+			}
 			return {
 				x : this.x + (Math.cos(centreAngle) * rangeFromCentre),
 				y : this.y + (Math.sin(centreAngle) * rangeFromCentre)
@@ -1335,7 +1341,7 @@
 			// draw the text
 			if (this.showText && this.percentValue) {
 				var textPosition = this.tooltipPosition();
-				ctx.font = helpers.fontString(14, "lighter", "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif");
+				ctx.font = helpers.fontString(this.fontSize, "lighter", "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif");
 				ctx.fillStyle = "#333";
 				ctx.textAlign = "center";
 				ctx.textBaseline = "middle";
