@@ -13,47 +13,88 @@
 		barShowStroke: true,
 
 		// Number - Pixel width of the bar stroke
-		barStrokeWidth: 2,
+		barStrokeWidth: 1,
+
+		// Number - Pixel width of the bar
+		barWidth: 45,
 
 		// Number - Spacing between each of the Y value sets
-		barValueSpacing: 5
+		barValueSpacing: 20,
+
+		scaleLineColor: '#999',
+
+		scaleLineWidth: 0.5
 	}
 
-	Chart.AntiBarScale = Chart.Element.extend({
+	Chart.HorizonRectangle = Chart.Element.extend({
+		draw : function(){
+			var ctx = this.ctx,
+				halfWidth = this.width / 2,
+				topX = this.x,
+				bottomX = this.x + halfWidth * 2,
+				top = this.y,
+				halfStroke = this.strokeWidth / 2;
+
+			// Canvas doesn't allow us to stroke inside the width so we can
+			// adjust the sizes to fit if we're setting a stroke on the line
+			if (this.showStroke){
+				topX += halfStroke;
+				bottomX -= halfStroke;
+				top += halfStroke;
+			}
+
+			ctx.beginPath();
+
+			ctx.fillStyle = this.fillColor;
+			ctx.strokeStyle = this.strokeColor;
+			ctx.lineWidth = this.strokeWidth;
+
+			// It'd be nice to keep this class totally generic to any rectangle
+			// and simply specify which border to miss out.
+			ctx.moveTo(this.base, topX)
+			ctx.lineTo(top, topX);
+			ctx.lineTo(top, bottomX);
+			ctx.lineTo(this.base, bottomX);
+			ctx.fill();
+			if (this.showStroke){
+				ctx.stroke();
+			}
+		}
+	});
+
+	Chart.LeafBarScale = Chart.Element.extend({
 		initialize : function(){
 			this.fit();
 		},
+		calculateSize : function() {
+			var barLen = this.yLabels.length
+			this.height = barLen * (this.barWidth + this.barSpacing)
+			this.scaleLineX = this.width / 2
+			this.ctx.canvas.height = this.height
+			this.ctx.canvas.width = this.width
+			this.ctx.canvas.style.height = this.height + 'px'
+			this.ctx.canvas.style.width = this.width + 'px'
+			this.ctx.canvas.parentNode.style.height = this.height + 'px'
+			this.ctx.canvas.parentNode.style.width = this.width + 'px'
+		},
 		buildYLabels : function(){
-			this.yLabels = [];
+			// console.log(this.yLabels)
+			/*this.yLabels = [];
 
 			var stepDecimalPlaces = helpers.getDecimalPlaces(this.stepValue);
 
 			for (var i=0; i<=this.steps; i++){
 				this.yLabels.push(template(this.templateString,{value:(this.min + (i * this.stepValue)).toFixed(stepDecimalPlaces)}));
 			}
-			this.yLabelWidth = (this.display && this.showLabels) ? helpers.longestText(this.ctx,this.font,this.yLabels) + 10 : 0;
-		},
-		addXLabel : function(label){
-			this.xLabels.push(label);
-			this.valuesCount++;
-			this.fit();
-		},
-		removeXLabel : function(){
-			this.xLabels.shift();
-			this.valuesCount--;
-			this.fit();
+			this.yLabelWidth = (this.display && this.showLabels) ? helpers.longestText(this.ctx,this.font,this.yLabels) + 10 : 0;*/
 		},
 		// Fitting loop to rotate x Labels and figure out what fits there, and also calculate how many Y steps to use
 		fit: function(){
 			// First we need the width of the yLabels, assuming the xLabels aren't rotated
 
 			// To do that we need the base line at the top and base of the chart, assuming there is no x label rotation
-			this.startPoint = (this.display) ? this.fontSize : 0;
-			this.endPoint = (this.display) ? this.height - (this.fontSize * 1.5) - 5 : this.height; // -5 to pad labels
-
-			// Apply padding settings to the start and end point.
-			this.startPoint += this.padding;
-			this.endPoint -= this.padding;
+			this.startPoint = 0
+			this.endPoint = this.height
 
 			// Cache the starting endpoint, excluding the space for x labels
 			var cachedEndPoint = this.endPoint;
@@ -72,15 +113,17 @@
 				this.max;
 			 *
 			 */
-			this.calculateYRange(cachedHeight);
+			this.calculateYRange(this.width);
 
 			// With these properties set we can now build the array of yLabels
 			// and also the width of the largest yLabel
 			this.buildYLabels();
 
-			this.calculateXLabelRotation();
+			this.calculateSize()
 
-			while((cachedHeight > this.endPoint - this.startPoint)){
+			// this.calculateXLabelRotation();
+
+			/*while((cachedHeight > this.endPoint - this.startPoint)){
 				cachedHeight = this.endPoint - this.startPoint;
 				cachedYLabelWidth = this.yLabelWidth;
 
@@ -92,7 +135,7 @@
 					this.endPoint = cachedEndPoint;
 					this.calculateXLabelRotation();
 				}
-			}
+			}*/
 
 		},
 		calculateXLabelRotation : function(){
@@ -155,19 +198,18 @@
 			return this.startPoint - this.endPoint;
 		},
 		calculateY : function(value){
-			var scalingFactor = this.drawingArea() / (this.min - this.max);
-			return this.endPoint - (scalingFactor * (value - this.min));
+			var scalingFactor = this.scaleLineX / (this.max - this.min)
+			return scalingFactor * (value - this.min)
 		},
 		calculateX : function(index){
-			var isRotated = (this.xLabelRotation > 0),
 				// innerWidth = (this.offsetGridLines) ? this.width - offsetLeft - this.padding : this.width - (offsetLeft + halfLabelWidth * 2) - this.padding,
-				innerWidth = this.width - (this.xScalePaddingLeft + this.xScalePaddingRight),
-				valueWidth = innerWidth/Math.max((this.valuesCount - ((this.offsetGridLines) ? 0 : 1)), 1),
-				valueOffset = (valueWidth * index) + this.xScalePaddingLeft;
+			var	innerWidth = this.height,
+				valueWidth = innerWidth / Math.max((this.valuesCount - ((this.offsetGridLines) ? 0 : 1)), 1),
+				valueOffset = (valueWidth * index) + this.barSpacing / 2;
 
-			if (this.offsetGridLines){
+			/*if (this.offsetGridLines){
 				valueOffset += (valueWidth/2);
-			}
+			}*/
 
 			return Math.round(valueOffset);
 		},
@@ -179,143 +221,49 @@
 			var ctx = this.ctx,
 				yLabelGap = (this.endPoint - this.startPoint) / this.steps,
 				xStart = Math.round(this.xScalePaddingLeft);
+
 			if (this.display){
 				ctx.fillStyle = this.textColor;
 				ctx.font = this.font;
-				each(this.yLabels,function(labelString,index){
-					var yLabelCenter = this.endPoint - (yLabelGap * index),
-						linePositionY = Math.round(yLabelCenter),
-						drawHorizontalLine = this.showHorizontalLines;
 
-					ctx.textAlign = "right";
-					ctx.textBaseline = "middle";
-					if (this.showLabels){
-						ctx.fillText(labelString,xStart - 10,yLabelCenter);
-					}
-
-					// This is X axis, so draw it
-					if (index === 0 && !drawHorizontalLine){
-						drawHorizontalLine = true;
-					}
-
-					if (drawHorizontalLine){
-						ctx.beginPath();
-					}
-
-					if (index > 0){
-						// This is a grid line in the centre, so drop that
-						ctx.lineWidth = this.gridLineWidth;
-						ctx.strokeStyle = this.gridLineColor;
-					} else {
-						// This is the first line on the scale
-						ctx.lineWidth = this.lineWidth;
-						ctx.strokeStyle = this.lineColor;
-					}
-
-					linePositionY += helpers.aliasPixel(ctx.lineWidth);
-
-					if(drawHorizontalLine){
-						ctx.moveTo(xStart, linePositionY);
-						ctx.lineTo(this.width, linePositionY);
-						ctx.stroke();
-						ctx.closePath();
-					}
-
-					ctx.lineWidth = this.lineWidth;
-					ctx.strokeStyle = this.lineColor;
-					ctx.beginPath();
-					ctx.moveTo(xStart - 5, linePositionY);
-					ctx.lineTo(xStart, linePositionY);
-					ctx.stroke();
-					ctx.closePath();
-
-				},this);
-
-				each(this.xLabels,function(label,index){
-					var xPos = this.calculateX(index) + aliasPixel(this.lineWidth),
-						// Check to see if line/bar here and decide where to place the line
-						linePos = this.calculateX(index - (this.offsetGridLines ? 0.5 : 0)) + aliasPixel(this.lineWidth),
-						isRotated = (this.xLabelRotation > 0),
-						drawVerticalLine = this.showVerticalLines;
-
-					// This is Y axis, so draw it
-					if (index === 0 && !drawVerticalLine){
-						drawVerticalLine = true;
-					}
-
-					if (drawVerticalLine){
-						ctx.beginPath();
-					}
-
-					if (index > 0){
-						// This is a grid line in the centre, so drop that
-						ctx.lineWidth = this.gridLineWidth;
-						ctx.strokeStyle = this.gridLineColor;
-					} else {
-						// This is the first line on the scale
-						ctx.lineWidth = this.lineWidth;
-						ctx.strokeStyle = this.lineColor;
-					}
-
-					if (drawVerticalLine){
-						ctx.moveTo(linePos,this.endPoint);
-						ctx.lineTo(linePos,this.startPoint - 3);
-						ctx.stroke();
-						ctx.closePath();
-					}
-
-
-					ctx.lineWidth = this.lineWidth;
-					ctx.strokeStyle = this.lineColor;
-
-
-					// Small lines at the bottom of the base grid line
-					ctx.beginPath();
-					ctx.moveTo(linePos,this.endPoint);
-					ctx.lineTo(linePos,this.endPoint + 5);
-					ctx.stroke();
-					ctx.closePath();
-
-					ctx.save();
-					ctx.translate(xPos,(isRotated) ? this.endPoint + 12 : this.endPoint + 8);
-					ctx.rotate(toRadians(this.xLabelRotation)*-1);
-					ctx.font = this.font;
-					ctx.textAlign = (isRotated) ? "right" : "center";
-					ctx.textBaseline = (isRotated) ? "middle" : "top";
-					ctx.fillText(label, 0, 0);
-					ctx.restore();
-				},this);
-
+				ctx.lineWidth = this.lineWidth;
+				ctx.strokeStyle = this.lineColor;
+				ctx.beginPath();
+				ctx.moveTo(this.scaleLineX, 0);
+				ctx.lineTo(this.scaleLineX, this.height);
+				ctx.stroke();
+				ctx.closePath();
 			}
 		}
 
 	});
 
 	Chart.Type.extend({
-		name: 'AntiBar',
+		name: 'LeafBar',
 		defaults: defaultConfig,
 		initialize: function(data) {
 			// Expose options as a scope variable here so we can access it in the ScaleClass
 			var options = this.options
 
-			this.ScaleClass = Chart.AntiBarScale.extend({
+			this.ScaleClass = Chart.LeafBarScale.extend({
 				offsetGridLines: true,
-				calculateBarY: function(datasetCount, datasetIndex, barIndex) {
+				calculateBarX: function(datasetCount, datasetIndex, barIndex) {
 					// Reusable method for calculating the yPosition of given bar based on datasetIndex & width of the bar
-					var barWidth = this.calculateBarWidth(),
-						yAbsolute = this.calculateY(barIndex) - (barWidth / 2)
+					var barWidth = this.calculateBarWidth(datasetCount),
+						yAbsolute = this.calculateX(barIndex) - (barWidth / 2)
 
-					return yAbsolute + (barWidth * datasetIndex) + barWidth / 2
+					return yAbsolute + barWidth / 2
 				},
-				calculateBarWidth: function() {
-					return (this.calculateY(1) - this.calculateY(0)) - (2 * options.barValueSpacing)
+				calculateBarWidth: function(count) {
+					var baseWidth = (this.height - this.barSpacing*count) / count
+					return baseWidth
 				}
 			})
 
 			this.datasets = []
 
 			// Declare the extension of the default point, to cater for the options passed in to the constructor
-			this.BarClass = Chart.Rectangle.extend({
+			this.BarClass = Chart.HorizonRectangle.extend({
 				strokeWidth: this.options.barStrokeWidth,
 				showStroke: this.options.barShowStroke,
 				ctx: this.chart.ctx
@@ -327,6 +275,7 @@
 					label: dataset.label || null,
 					fillColor: dataset.fillColor,
 					strokeColor: dataset.strokeColor,
+					direction: datasetIndex % 2 == 0 ? 'left' : 'right',
 					bars: []
 				}
 
@@ -341,7 +290,7 @@
 						strokeColor: dataset.strokeColor,
 						fillColor: dataset.fillColor,
 						highlightFill: dataset.highlightFill || dataset.fillColor,
-						highlightStroke: dataset.highlightStroke || dataset.strokeColor
+						highlightStroke: dataset.highlightStroke || dataset.strokeColor,
 					}))
 				}, this)
 			}, this)
@@ -352,8 +301,8 @@
 
 			this.eachBars(function(bar, index, datasetIndex) {
 				helpers.extend(bar, {
-					width: this.scale.calculateBarWidth(),
-					y: this.scale.calculateBarY(this.datasets.length, datasetIndex, index),
+					width: this.scale.calculateBarWidth(this.datasets[datasetIndex].bars.length),
+					y: this.scale.calculateBarX(this.datasets.length, datasetIndex, index),
 					x: this.scale.endPoint
 				})
 				bar.save()
@@ -382,6 +331,7 @@
 		buildScale: function(labels) {
 			var self = this
 
+			// Use to calculate the range of scale
 			var dataTotal = function() {
 				var values = []
 				self.eachBars(function(bar) {
@@ -401,8 +351,10 @@
 				valuesCount : labels.length,
 				beginAtZero : this.options.scaleBeginAtZero,
 				integersOnly : this.options.scaleIntegersOnly,
-				calculateXRange: function(currentHeight) {
-					var updatedRanges = helpers.calculateScaleRange(dataTotal(), currentHeight, this.fontSize, this.beginAtZero, this.integersOnly)
+				barWidth : this.options.barWidth,
+				barSpacing : this.options.barValueSpacing,
+				calculateYRange: function(currentWidth) {
+					var updatedRanges = helpers.calculateScaleRange(dataTotal(), currentWidth, this.fontSize, this.beginAtZero, this.integersOnly)
 					helpers.extend(this, updatedRanges)
 				},
 				yLabels: labels,
@@ -414,43 +366,7 @@
 				display : this.options.showScale
 			}
 
-			if (this.options.scaleOverride){
-				helpers.extend(scaleOptions, {
-					calculateXRange: helpers.noop,
-					steps: this.options.scaleSteps,
-					stepValue: this.options.scaleStepWidth,
-					min: this.options.scaleStartValue,
-					max: this.options.scaleStartValue + (this.options.scaleSteps * this.options.scaleStepWidth)
-				});
-			}
-
 			this.scale = new this.ScaleClass(scaleOptions)
-		},
-		addData: function(valuesArray, label) {
-			// Map the valuse array for each of the datasets
-			helpers.each(valuesArray, function(value, datasetIndex) {
-				this.datasets[datasetIndex].bars.push(new this.BarClass({
-					value: value,
-					label: label,
-					datasetLabel: this.datasets[datasetIndex].label,
-					y: this.scale.calculateBarY(this.datasets.length, datasetIndex, this.scale.valuesCount + 1),
-					x: this.scale.endPoint,
-					width: this.scale.calculateBarWidth(this.datasets.length),
-					base: this.scale.endPoint,
-					strokeColor : this.datasets[datasetIndex].strokeColor,
-					fillColor : this.datasets[datasetIndex].fillColor
-				}))
-			}, this)
-
-			this.scale.addXLabel(label)
-
-			this.update()
-		},
-		removeData: function() {
-			helpers.each(this.datasets, function(dataset) {
-				dataset.bars.shift()
-			}, this)
-			this.update()
 		},
 		reflow: function() {
 			helpers.extend(this.BarClass.prototype, {
@@ -473,17 +389,27 @@
 
 			// Draw all the bars for each dataset
 			helpers.each(this.datasets, function(dataset, datasetIndex) {
-				helpers.each(datasets.bars, function(bar, index) {
+				helpers.each(dataset.bars, function(bar, index) {
 					if (bar.hasValue()) {
-						bar.base = this.scale.endPoint
-
+						bar.base = this.scale.scaleLineX
 						bar.transition({
-							x: this.scale.calculateX(bar.value),
-							y: this.scale.calculateBarY(this.datasets.length, datasetIndex, index),
-							width: this.scale.calculateBarWidth(this.datasets.length)
+							x: this.scale.calculateBarX(this.datasets.length, datasetIndex, index),
+							y: this.scale.scaleLineX + this.scale.calculateY(bar.value) * (dataset.direction == 'left' ? -1 : 1),
+							width: this.scale.calculateBarWidth(this.datasets[datasetIndex].bars.length),
 						}, easingDecimal).draw()
+
+						// Draw the value of bars
+						if (true) {
+							var x = this.scale.scaleLineX + 15 * (dataset.direction == 'left' ? -1 : 1)
+							var y = this.scale.calculateBarX(this.datasets.length, datasetIndex, index) + bar.width / 2
+							ctx.font = helpers.fontString(this.fontSize, "lighter", "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif");
+							ctx.fillStyle = (dataset.direction == 'left' ? '#336666' : '#eee');
+							ctx.textAlign = "center";
+							ctx.textBaseline = "middle";
+							ctx.fillText(bar.value, x, y);
+						}
 					}
-				})
+				}, this)
 			}, this)
 		}
 	})

@@ -393,13 +393,6 @@
 					ctx.fill();
 				}
 
-				//Now draw the points over the line
-				//A little inefficient double looping, but better than the line
-				//lagging behind the point positions
-				helpers.each(pointsWithValues,function(point){
-					point.draw();
-				});
-
 				// Draw the line Tooltips
 				if (this.options.showTooltips) {
 					var pointsLen = pointsWithValues.length
@@ -409,6 +402,17 @@
 						}
 					}.bind(this))
 				}
+
+				//Now draw the points over the line
+				//A little inefficient double looping, but better than the line
+				//lagging behind the point positions
+				helpers.each(pointsWithValues,function(point){
+					if (!this.clickValue && point.currentValue == point.label) {
+						point.fillColor = point.highlightFill
+					}
+					point.draw();
+				}, this);
+
 			},this);
 		}
 	});

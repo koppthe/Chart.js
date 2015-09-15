@@ -79,22 +79,22 @@
 
 			this.buildScale(data);
 
-			//Set up tooltip events on the chart (close)
-			// if (this.options.showTooltips){
-			// 	helpers.bindEvents(this, this.options.tooltipEvents, function(evt){
-			// 		var activePointsCollection = (evt.type !== 'mouseout') ? this.getPointsAtEvent(evt) : [];
+			//Set up tooltip events on the chart
+			if (this.options.showTooltips){
+				helpers.bindEvents(this, this.options.tooltipEvents, function(evt){
+					var activePointsCollection = (evt.type !== 'mouseout') ? this.getPointsAtEvent(evt) : [];
 
-			// 		this.eachPoints(function(point){
-			// 			point.restore(['fillColor', 'strokeColor']);
-			// 		});
-			// 		helpers.each(activePointsCollection, function(activePoint){
-			// 			activePoint.fillColor = activePoint.highlightFill;
-			// 			activePoint.strokeColor = activePoint.highlightStroke;
-			// 		});
+					this.eachPoints(function(point){
+						point.restore(['fillColor', 'strokeColor']);
+					});
+					helpers.each(activePointsCollection, function(activePoint){
+						activePoint.fillColor = activePoint.highlightFill;
+						activePoint.strokeColor = activePoint.highlightStroke;
+					});
 
-			// 		this.showTooltip(activePointsCollection);
-			// 	});
-			// }
+					this.showTooltip(activePointsCollection);
+				});
+			}
 
 			//Iterate through each of the datasets, and build this into a property of the chart
 			helpers.each(data.datasets,function(dataset){
@@ -105,19 +105,39 @@
 					strokeColor : dataset.strokeColor,
 					pointColor : dataset.pointColor,
 					pointStrokeColor : dataset.pointStrokeColor,
-					points : []
+					textColor : dataset.textColor,
+					points : [],
+					textPos : []
 				};
 
 				this.datasets.push(datasetObject);
+				// console.log(data.datasets)
+				// 文字显示的位置
+				if (data.datasets.length == 2) {
+					data.datasets[0]['flag'] = []
+					data.datasets[1]['flag'] = []
+					for (var i = 0; i < data.datasets[0].data.length; i++) {
+						if (data.datasets[0].data[i] < data.datasets[1].data[i]) {
+							data.datasets[0].flag.push(1)
+							data.datasets[1].flag.push(0)
+						} else {
+							data.datasets[0].flag.push(0)
+							data.datasets[1].flag.push(1)
+						}
+					}
+				}
 
 				helpers.each(dataset.data,function(dataPoint,index){
 					//Add a new point for each piece of data, passing any required data to draw.
-					var pointPosition;
+					var pointPosition, textPosition;
 					if (!this.scale.animation){
+						dataset.flag = dataset.flag || []
+						var offset = this.scale.calculateCenterOffset(dataPoint) + (dataset.flag[index] ? -12 : 12)
 						pointPosition = this.scale.getPointPosition(index, this.scale.calculateCenterOffset(dataPoint));
+						textPosition = this.scale.getPointPosition(index, offset)
 					}
 					datasetObject.points.push(new this.PointClass({
-						value : dataPoint - 20,	// because calculateScaleRange() function get the max value is 80
+						value : dataPoint,	// because calculateScaleRange() function get the max value is 80
 						label : data.labels[index],
 						datasetLabel: dataset.label,
 						x: (this.options.animation) ? this.scale.xCenter : pointPosition.x,
@@ -127,6 +147,18 @@
 						highlightFill : dataset.pointHighlightFill || dataset.pointColor,
 						highlightStroke : dataset.pointHighlightStroke || dataset.pointStrokeColor
 					}));
+					// Add text point
+					datasetObject.textPos.push(new this.PointClass({
+						value : dataPoint,	// because calculateScaleRange() function get the max value is 80
+						label : data.labels[index],
+						datasetLabel: dataset.label,
+						x: (this.options.animation) ? this.scale.xCenter : textPosition.x,
+						y: (this.options.animation) ? this.scale.yCenter : textPosition.y,
+						strokeColor : dataset.textColor,
+						fillColor : dataset.textColor,
+						highlightFill : dataset.pointHighlightFill || dataset.textColor,
+						highlightStroke : dataset.pointHighlightStroke || dataset.textColor
+					}))
 				},this);
 
 			},this);
@@ -328,14 +360,17 @@
 				//lagging behind the point positions
 				helpers.each(dataset.points,function(point){
 					if (point.hasValue()){
-						point.draw();
+						// point.draw();
 					}
-					// tooltipX = this.x - tooltipWidth + (this.cornerRadius + this.caretHeight);
-					ctx.font = helpers.fontString(14, "lighter", "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif");
-					ctx.fillStyle = "#333";
+				});
+
+				// Draw the value of the points
+				helpers.each(dataset.textPos,function(text){
+					ctx.font = helpers.fontString(14, "normal", "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif");
+					ctx.fillStyle = dataset.textColor;
 					ctx.textAlign = "center";
 					ctx.textBaseline = "middle";
-					ctx.fillText(point.value + 20, point.x, point.y);
+					ctx.fillText(text.value, text.x, text.y);
 				});
 
 			},this);

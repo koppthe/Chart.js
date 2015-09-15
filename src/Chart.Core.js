@@ -1300,13 +1300,13 @@
 			//Ensure within the outside of the arc centre, but inside arc outer
 		},
 		tooltipPosition : function(){
-			console.log(this)
+			// console.log(this)
 			var centreAngle = this.startAngle + ((this.endAngle - this.startAngle) / 2),
 				rangeFromCentre = (this.outerRadius - this.innerRadius) / 2 + this.innerRadius;
 
 			if (this.percentValue < 10) {
-				centreAngle = this.startAngle
-				rangeFromCentre = this.outerRadius
+				centreAngle = this.startAngle + 0.1
+				rangeFromCentre = this.outerRadius + 14
 			}
 			return {
 				x : this.x + (Math.cos(centreAngle) * rangeFromCentre),

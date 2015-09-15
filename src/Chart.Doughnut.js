@@ -112,7 +112,7 @@
 				circumference : (this.options.animateRotate) ? 0 : this.calculateCircumference(segment.value),
 				percentValue : (segment.value / this.total * 100).toFixed(1) * 1,
 				label : segment.label,
-				fontSize : this.options.fontSize
+				fontSize : this.options.fontSize || 14
 			}));
 			if (!silent){
 				this.reflow();
