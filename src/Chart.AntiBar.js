@@ -70,12 +70,13 @@
 			var barLen = this.yLabels.length
 			this.height = barLen * (this.barWidth + this.barSpacing)
 			this.scaleLineX = this.width / 2
-			this.ctx.canvas.height = this.height
-			this.ctx.canvas.width = this.width
+			this.ctx.canvas.height = this.height * window.devicePixelRatio;
+			this.ctx.canvas.width = this.width * window.devicePixelRatio;
 			this.ctx.canvas.style.height = this.height + 'px'
 			this.ctx.canvas.style.width = this.width + 'px'
 			this.ctx.canvas.parentNode.style.height = this.height + 'px'
 			this.ctx.canvas.parentNode.style.width = this.width + 'px'
+			this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 		},
 		buildYLabels : function(){
 			// console.log(this.yLabels)

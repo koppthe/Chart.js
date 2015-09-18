@@ -1317,7 +1317,8 @@
 
 			var easingDecimal = animationPercent || 1;
 
-			var ctx = this.ctx;
+			var ctx = this.ctx,
+				canvasWidth = ctx.canvas.clientWidth
 
 			ctx.beginPath();
 
@@ -1341,10 +1342,17 @@
 			// draw the text
 			if (this.showText && this.percentValue) {
 				var textPosition = this.tooltipPosition();
-				ctx.font = helpers.fontString(this.fontSize, "lighter", "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif");
+				ctx.font = helpers.fontString(this.fontSize, "normal", "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif");
 				ctx.fillStyle = "#333";
 				ctx.textAlign = "center";
 				ctx.textBaseline = "middle";
+				// fix bugs
+				var textActualWidth = ctx.measureText(this.percentValue + '%').width
+				if (textPosition.x < 0) {
+					textPosition.x = textActualWidth / 2
+				} else if (textPosition.x + (textActualWidth / 2) > canvasWidth) {
+					textPosition.x = canvasWidth - textActualWidth / 2
+				}
 				ctx.fillText(this.percentValue + '%', textPosition.x, textPosition.y);
 			}
 		}
@@ -2299,12 +2307,13 @@
 			var barLen = this.yLabels.length
 			this.height = barLen * (this.barWidth + this.barSpacing)
 			this.scaleLineX = this.width / 2
-			this.ctx.canvas.height = this.height
-			this.ctx.canvas.width = this.width
+			this.ctx.canvas.height = this.height * window.devicePixelRatio;
+			this.ctx.canvas.width = this.width * window.devicePixelRatio;
 			this.ctx.canvas.style.height = this.height + 'px'
 			this.ctx.canvas.style.width = this.width + 'px'
 			this.ctx.canvas.parentNode.style.height = this.height + 'px'
 			this.ctx.canvas.parentNode.style.width = this.width + 'px'
+			this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 		},
 		buildYLabels : function(){
 			// console.log(this.yLabels)
@@ -3859,7 +3868,7 @@
 			pointLabelFontStyle : "normal",
 
 			//Number - Point label font size in pixels
-			pointLabelFontSize : 10,
+			pointLabelFontSize : 14,
 
 			//String - Point label font colour
 			pointLabelFontColor : "#666",

@@ -1317,7 +1317,8 @@
 
 			var easingDecimal = animationPercent || 1;
 
-			var ctx = this.ctx;
+			var ctx = this.ctx,
+				canvasWidth = ctx.canvas.clientWidth
 
 			ctx.beginPath();
 
@@ -1341,10 +1342,17 @@
 			// draw the text
 			if (this.showText && this.percentValue) {
 				var textPosition = this.tooltipPosition();
-				ctx.font = helpers.fontString(this.fontSize, "lighter", "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif");
+				ctx.font = helpers.fontString(this.fontSize, "normal", "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif");
 				ctx.fillStyle = "#333";
 				ctx.textAlign = "center";
 				ctx.textBaseline = "middle";
+				// fix bugs
+				var textActualWidth = ctx.measureText(this.percentValue + '%').width
+				if (textPosition.x < 0) {
+					textPosition.x = textActualWidth / 2
+				} else if (textPosition.x + (textActualWidth / 2) > canvasWidth) {
+					textPosition.x = canvasWidth - textActualWidth / 2
+				}
 				ctx.fillText(this.percentValue + '%', textPosition.x, textPosition.y);
 			}
 		}
